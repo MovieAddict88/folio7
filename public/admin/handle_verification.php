@@ -3,7 +3,8 @@ session_start();
 require_once '../../config/db.php';
 require_once '../../src/Invoice.php';
 require_once '../../src/Payment.php';
-require_once '../../src/Notification.php';
+require_once '../../src/Conversation.php';
+require_once '../../src/Message.php';
 require_once '../../src/User.php';
 
 // Authenticate admin
@@ -24,7 +25,8 @@ $action = $_POST['action'];
 $pdo = getDBConnection();
 $invoice = new Invoice($pdo);
 $payment = new Payment($pdo);
-$notification = new Notification($pdo);
+$conversation = new Conversation($pdo);
+$message = new Message($pdo);
 
 $invoiceData = $invoice->getById($invoiceId);
 
@@ -40,14 +42,37 @@ try {
     $pdo->beginTransaction();
 
     if ($action === 'approve') {
-        // Update the invoice status to 'paid'.
-        $invoice->updateStatus($invoiceId, 'paid');
+        // When approving, we need to check if the invoice is fully paid or partially paid.
+        // We'll get the latest payment to know the amount.
+        $latestPayment = $payment->getLatestPaymentForInvoice($invoiceId);
 
-        // Create notification for the user
-        $message = "Your payment for Invoice #{$invoiceId} has been approved and is now marked as paid. Thank you!";
-        $notification->create($userId, $message);
+        if (!$latestPayment) {
+            throw new Exception("No payment record found to approve for invoice #{$invoiceId}.");
+        }
 
-        $successMessage = "Payment for Invoice #{$invoiceId} has been approved and marked as paid.";
+        // The amount of the payment being approved
+        $paymentAmount = $latestPayment['amount'];
+
+        // The invoice class will now handle the logic of updating the status
+        $invoice->updateStatusBasedOnBalance($invoiceId);
+
+        // Update notification message to be more accurate
+        $newInvoiceState = $invoice->getById($invoiceId);
+        $status = $newInvoiceState['status'];
+
+        $messageText = "Your payment of $" . number_format($paymentAmount, 2) . " for Invoice #{$invoiceId} has been approved. The invoice status is now '{$status}'.";
+
+        // Find existing conversation or create a new one
+        $subject = "Invoice #{$invoiceId} Payment Verification";
+        $existingConversation = $conversation->findBySubjectAndUserId($subject, $userId);
+        if ($existingConversation) {
+            $conversationId = $existingConversation['id'];
+        } else {
+            $conversationId = $conversation->create($userId, $_SESSION['user_id'], $subject);
+        }
+        $message->create($conversationId, $_SESSION['user_id'], $messageText);
+
+        $successMessage = "Payment for Invoice #{$invoiceId} has been approved. Invoice status is now '{$status}'.";
 
     } elseif ($action === 'reject') {
         // Find the latest payment to know how much to revert
@@ -68,9 +93,18 @@ try {
         // 3. Delete the specific payment record that was rejected
         $payment->deleteById($latestPayment['id']);
 
-        // 4. Create a notification for the user
-        $message = "Your submitted payment of $" . number_format($amountToRevert, 2) . " for Invoice #{$invoiceId} was rejected. Please check your payment details and try again, or contact support.";
-        $notification->create($userId, $message);
+        // 4. Create a conversation message for the user
+        $messageText = "Your submitted payment of $" . number_format($amountToRevert, 2) . " for Invoice #{$invoiceId} was rejected. Please check your payment details and try again, or contact support.";
+
+        // Find existing conversation or create a new one
+        $subject = "Invoice #{$invoiceId} Payment Verification";
+        $existingConversation = $conversation->findBySubjectAndUserId($subject, $userId);
+        if ($existingConversation) {
+            $conversationId = $existingConversation['id'];
+        } else {
+            $conversationId = $conversation->create($userId, $_SESSION['user_id'], $subject);
+        }
+        $message->create($conversationId, $_SESSION['user_id'], $messageText);
 
         $successMessage = "The payment for Invoice #{$invoiceId} has been rejected. The user has been notified.";
 

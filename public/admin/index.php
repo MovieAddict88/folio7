@@ -8,12 +8,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 }
 
 require_once '../../config/db.php';
-require_once '../../src/Notification.php';
+require_once '../../src/Conversation.php';
 
 $pdo = getDBConnection();
-$notification = new Notification($pdo);
-// Assuming the admin user who receives notifications has user_id = 1
-$unreadNotifications = $notification->getUnreadByUserId(1);
+$conversation = new Conversation($pdo);
+$adminUserId = $_SESSION['user_id'];
+
+$conversations = $conversation->getByUserId($adminUserId);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -28,23 +29,30 @@ $unreadNotifications = $notification->getUnreadByUserId(1);
     <div class="container mt-5">
         <h1 class="text-center mb-4">Welcome, Admin!</h1>
 
+        <?php if (isset($_GET['success'])): ?>
+            <div class="alert alert-success"><?php echo htmlspecialchars($_GET['success']); ?></div>
+        <?php endif; ?>
+        <?php if (isset($_GET['error'])): ?>
+            <div class="alert alert-danger"><?php echo htmlspecialchars($_GET['error']); ?></div>
+        <?php endif; ?>
+
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0">Recent Payment Notifications</h5>
+                        <h5 class="mb-0">Recent Conversations</h5>
                     </div>
                     <div class="list-group list-group-flush">
-                        <?php if (empty($unreadNotifications)): ?>
-                            <div class="list-group-item">No new notifications.</div>
+                        <?php if (empty($conversations)): ?>
+                            <div class="list-group-item">No new conversations.</div>
                         <?php else: ?>
-                            <?php foreach ($unreadNotifications as $notif): ?>
-                                <div class="list-group-item list-group-item-action">
+                            <?php foreach ($conversations as $conv): ?>
+                                <a href="../view_conversation.php?id=<?php echo $conv['id']; ?>" class="list-group-item list-group-item-action">
                                     <div class="d-flex w-100 justify-content-between">
-                                        <p class="mb-1"><?php echo htmlspecialchars($notif['message']); ?></p>
-                                        <small><?php echo htmlspecialchars(date('M j, Y, g:i a', strtotime($notif['created_at']))); ?></small>
+                                        <h5 class="mb-1"><?php echo htmlspecialchars($conv['subject']); ?></h5>
+                                        <small><?php echo htmlspecialchars(date('M j, Y, g:i a', strtotime($conv['created_at']))); ?></small>
                                     </div>
-                                </div>
+                                </a>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
