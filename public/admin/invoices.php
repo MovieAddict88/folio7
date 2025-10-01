@@ -11,7 +11,18 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
 $pdo = getDBConnection();
 $invoice = new Invoice($pdo);
-$invoices = $invoice->getAllWithUsers();
+
+// Pagination settings
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$limit = 10; // Invoices per page
+$offset = ($page - 1) * $limit;
+
+// Get total number of invoices for pagination
+$totalInvoices = $invoice->countAll();
+$totalPages = ceil($totalInvoices / $limit);
+
+// Get invoices for the current page
+$invoices = $invoice->getAllWithUsers($limit, $offset);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -78,6 +89,7 @@ $invoices = $invoice->getAllWithUsers();
                     <td><?php echo htmlspecialchars($inv['due_date']); ?></td>
                     <td>
                         <a href="view_invoice.php?id=<?php echo $inv['id']; ?>" class="btn btn-sm btn-info">View</a>
+                        <a href="view_transaction_conversation.php?invoice_id=<?php echo $inv['id']; ?>" class="btn btn-sm btn-warning">Discuss</a>
                         <?php if ($inv['status'] === 'pending_verification'): ?>
                             <form action="handle_verification.php" method="POST" class="d-inline">
                                 <input type="hidden" name="invoice_id" value="<?php echo $inv['id']; ?>">
@@ -90,6 +102,25 @@ $invoices = $invoice->getAllWithUsers();
                 <?php endforeach; ?>
             </tbody>
         </table>
+
+        <!-- Pagination -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <?php if ($page > 1): ?>
+                    <li class="page-item"><a class="page-link" href="?page=<?php echo $page - 1; ?>">Previous</a></li>
+                <?php endif; ?>
+
+                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                    <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
+                        <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                    </li>
+                <?php endfor; ?>
+
+                <?php if ($page < $totalPages): ?>
+                    <li class="page-item"><a class="page-link" href="?page=<?php echo $page + 1; ?>">Next</a></li>
+                <?php endif; ?>
+            </ul>
+        </nav>
     </div>
 </body>
 </html>

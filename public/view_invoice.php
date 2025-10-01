@@ -117,6 +117,7 @@ $items = $details['items'];
                  <?php if ($invoiceData['balance'] > 0 && in_array($invoiceData['status'], ['pending', 'rejected', 'cancelled'])): ?>
                     <a href="payment.php?id=<?php echo htmlspecialchars($invoiceData['id']); ?>" class="btn btn-success">Pay Now</a>
                  <?php endif; ?>
+                 <a href="view_transaction_conversation.php?invoice_id=<?php echo htmlspecialchars($invoiceData['id']); ?>" class="btn btn-info">Discuss this transaction</a>
             </div>
         </div>
     </div>
