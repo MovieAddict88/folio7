@@ -87,11 +87,13 @@ try {
         // Note: The `create` method in Payment.php will need to be updated to handle a new column for the reference number.
         $payment->create($invoiceId, $amount, $paymentMethod, $finalTransactionId, $referenceNumber);
 
-        // 2. Update the invoice status to 'pending_verification'
+        // 2. Update the invoice's paid amount and balance without changing the status from 'pending'
+        $invoice->recordPendingPayment($invoiceId, $amount);
+
+        // 3. Update the invoice status to 'pending_verification'
         $invoice->updateStatus($invoiceId, 'pending_verification');
 
-
-        // 3. Create a notification for the admin to verify the payment
+        // 4. Create a notification for the admin to verify the payment
         $message = "A payment of $" . number_format($amount, 2) . " for Invoice #$invoiceId was submitted via $paymentMethod and requires verification. Reference: $referenceNumber.";
         $notification->create($adminUserId, $message);
 
