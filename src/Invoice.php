@@ -202,5 +202,24 @@ class Invoice {
         );
         return $stmt->execute([$newAmountPaid, $newBalance, $id]);
     }
+
+    /**
+     * Updates the invoice status based on its current balance.
+     * Sets status to 'paid' if balance is 0 or less, otherwise 'pending'.
+     * @param int $id The invoice ID.
+     * @return bool
+     */
+    public function updateStatusBasedOnBalance($id) {
+        $invoice = $this->getById($id);
+        if (!$invoice) {
+            return false;
+        }
+
+        // Determine the new status based on the balance.
+        // The approval of a payment is a final action on that payment, so if balance is > 0, it's 'pending', otherwise 'paid'.
+        $newStatus = $invoice['balance'] <= 0 ? 'paid' : 'pending';
+
+        return $this->updateStatus($id, $newStatus);
+    }
 }
 ?>
