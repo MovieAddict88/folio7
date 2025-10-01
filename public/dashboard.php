@@ -48,7 +48,19 @@ if (!isset($_SESSION['user_id'])) {
 
         $pdo = getDBConnection();
         $invoice = new Invoice($pdo);
-        $userInvoices = $invoice->getByUserId($_SESSION['user_id']);
+        $userId = $_SESSION['user_id'];
+
+        // Pagination settings
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 10; // Invoices per page
+        $offset = ($page - 1) * $limit;
+
+        // Get total number of invoices for this user
+        $totalInvoices = $invoice->countByUserId($userId);
+        $totalPages = ceil($totalInvoices / $limit);
+
+        // Get invoices for the current page
+        $userInvoices = $invoice->getByUserId($userId, $limit, $offset);
         ?>
 
         <?php if (empty($userInvoices)): ?>
@@ -103,6 +115,27 @@ if (!isset($_SESSION['user_id'])) {
                     <?php endforeach; ?>
                 </tbody>
             </table>
+
+            <!-- Pagination -->
+            <?php if ($totalPages > 1): ?>
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <?php if ($page > 1): ?>
+                        <li class="page-item"><a class="page-link" href="?page=<?php echo $page - 1; ?>">Previous</a></li>
+                    <?php endif; ?>
+
+                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                        <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
+                            <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                        </li>
+                    <?php endfor; ?>
+
+                    <?php if ($page < $totalPages): ?>
+                        <li class="page-item"><a class="page-link" href="?page=<?php echo $page + 1; ?>">Next</a></li>
+                    <?php endif; ?>
+                </ul>
+            </nav>
+            <?php endif; ?>
         <?php endif; ?>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

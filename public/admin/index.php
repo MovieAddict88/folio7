@@ -12,8 +12,17 @@ require_once '../../src/Notification.php';
 
 $pdo = getDBConnection();
 $notification = new Notification($pdo);
-// Assuming the admin user who receives notifications has user_id = 1
-$unreadNotifications = $notification->getUnreadByUserId(1);
+$adminUserId = 1; // Assuming the admin user who receives notifications has user_id = 1
+
+// Pagination settings
+$limit = 10;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $limit;
+
+// Get notifications for the current page
+$unreadNotifications = $notification->getUnreadByUserIdWithPagination($adminUserId, $limit, $offset);
+$totalNotifications = $notification->countUnreadByUserId($adminUserId);
+$totalPages = ceil($totalNotifications / $limit);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -28,6 +37,13 @@ $unreadNotifications = $notification->getUnreadByUserId(1);
     <div class="container mt-5">
         <h1 class="text-center mb-4">Welcome, Admin!</h1>
 
+        <?php if (isset($_GET['success'])): ?>
+            <div class="alert alert-success"><?php echo htmlspecialchars($_GET['success']); ?></div>
+        <?php endif; ?>
+        <?php if (isset($_GET['error'])): ?>
+            <div class="alert alert-danger"><?php echo htmlspecialchars($_GET['error']); ?></div>
+        <?php endif; ?>
+
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card">
@@ -39,15 +55,36 @@ $unreadNotifications = $notification->getUnreadByUserId(1);
                             <div class="list-group-item">No new notifications.</div>
                         <?php else: ?>
                             <?php foreach ($unreadNotifications as $notif): ?>
-                                <div class="list-group-item list-group-item-action">
+                                <div class="list-group-item">
                                     <div class="d-flex w-100 justify-content-between">
                                         <p class="mb-1"><?php echo htmlspecialchars($notif['message']); ?></p>
                                         <small><?php echo htmlspecialchars(date('M j, Y, g:i a', strtotime($notif['created_at']))); ?></small>
+                                    </div>
+                                    <div class="mt-2">
+                                        <a href="view_notification.php?id=<?php echo $notif['id']; ?>" class="btn btn-sm btn-primary">View</a>
+                                        <a href="delete_notification.php?id=<?php echo $notif['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this notification?');">Delete</a>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
+                    <?php if ($totalPages > 1): ?>
+                    <div class="card-footer">
+                        <nav>
+                            <ul class="pagination justify-content-center">
+                                <?php if ($page > 1): ?>
+                                    <li class="page-item"><a class="page-link" href="?page=<?php echo $page - 1; ?>">Previous</a></li>
+                                <?php endif; ?>
+                                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                                    <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>"><a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a></li>
+                                <?php endfor; ?>
+                                <?php if ($page < $totalPages): ?>
+                                    <li class="page-item"><a class="page-link" href="?page=<?php echo $page + 1; ?>">Next</a></li>
+                                <?php endif; ?>
+                            </ul>
+                        </nav>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
