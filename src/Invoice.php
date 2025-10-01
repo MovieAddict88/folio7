@@ -47,16 +47,31 @@ class Invoice {
     }
 
     /**
-     * Fetches all invoices with user information.
+     * Fetches all invoices with user information for a specific page.
+     * @param int $limit
+     * @param int $offset
      * @return array
      */
-    public function getAllWithUsers() {
+    public function getAllWithUsers($limit, $offset) {
         $sql = "SELECT i.id, i.total_amount, i.amount_paid, i.balance, i.status, i.created_at, i.due_date, u.username
                 FROM invoices i
                 JOIN users u ON i.user_id = u.id
-                ORDER BY i.created_at DESC";
-        $stmt = $this->pdo->query($sql);
+                ORDER BY i.created_at DESC
+                LIMIT :limit OFFSET :offset";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Counts all invoices.
+     * @return int
+     */
+    public function countAll() {
+        $stmt = $this->pdo->query("SELECT COUNT(*) FROM invoices");
+        return $stmt->fetchColumn();
     }
 
     /**
@@ -94,16 +109,32 @@ class Invoice {
     }
 
      /**
-     * Fetches all invoices for a specific user.
+     * Fetches all invoices for a specific user for a specific page.
      * @param int $userId
+     * @param int $limit
+     * @param int $offset
      * @return array
      */
-    public function getByUserId($userId) {
+    public function getByUserId($userId, $limit, $offset) {
         $stmt = $this->pdo->prepare(
-            'SELECT * FROM invoices WHERE user_id = ? ORDER BY created_at DESC'
+            'SELECT * FROM invoices WHERE user_id = :userId ORDER BY created_at DESC LIMIT :limit OFFSET :offset'
         );
-        $stmt->execute([$userId]);
+        $stmt->bindValue(':userId', $userId, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Counts all invoices for a specific user.
+     * @param int $userId
+     * @return int
+     */
+    public function countByUserId($userId) {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM invoices WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        return $stmt->fetchColumn();
     }
 
     /**
