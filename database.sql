@@ -95,13 +95,16 @@ CREATE TABLE `conversations` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
   `admin_id` int(11) NOT NULL,
+  `invoice_id` int(11) DEFAULT NULL,
   `subject` varchar(255) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   KEY `admin_id` (`admin_id`),
+  KEY `invoice_id` (`invoice_id`),
   CONSTRAINT `conversations_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `conversations_ibfk_2` FOREIGN KEY (`admin_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+  CONSTRAINT `conversations_ibfk_2` FOREIGN KEY (`admin_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `conversations_ibfk_3` FOREIGN KEY (`invoice_id`) REFERENCES `invoices` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
@@ -113,6 +116,7 @@ CREATE TABLE `messages` (
   `conversation_id` int(11) NOT NULL,
   `sender_id` int(11) NOT NULL,
   `message` text NOT NULL,
+  `file_path` varchar(255) DEFAULT NULL,
   `is_read` tinyint(1) NOT NULL DEFAULT '0',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),

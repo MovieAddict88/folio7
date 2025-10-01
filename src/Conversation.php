@@ -7,10 +7,10 @@ class Conversation {
         $this->pdo = $pdo;
     }
 
-    public function create($userId, $adminId, $subject) {
-        $sql = "INSERT INTO conversations (user_id, admin_id, subject) VALUES (?, ?, ?)";
+    public function create($userId, $adminId, $subject, $invoiceId = null) {
+        $sql = "INSERT INTO conversations (user_id, admin_id, subject, invoice_id) VALUES (?, ?, ?, ?)";
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$userId, $adminId, $subject]);
+        $stmt->execute([$userId, $adminId, $subject, $invoiceId]);
         return $this->pdo->lastInsertId();
     }
 
@@ -32,6 +32,13 @@ class Conversation {
         $sql = "SELECT * FROM conversations WHERE subject = ? AND user_id = ?";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([$subject, $userId]);
+        return $stmt->fetch();
+    }
+
+    public function findByInvoiceId($invoiceId) {
+        $sql = "SELECT * FROM conversations WHERE invoice_id = ?";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$invoiceId]);
         return $stmt->fetch();
     }
 }

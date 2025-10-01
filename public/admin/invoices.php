@@ -89,6 +89,7 @@ $invoices = $invoice->getAllWithUsers($limit, $offset);
                     <td><?php echo htmlspecialchars($inv['due_date']); ?></td>
                     <td>
                         <a href="view_invoice.php?id=<?php echo $inv['id']; ?>" class="btn btn-sm btn-info">View</a>
+                        <a href="view_transaction_conversation.php?invoice_id=<?php echo $inv['id']; ?>" class="btn btn-sm btn-warning">Discuss</a>
                         <?php if ($inv['status'] === 'pending_verification'): ?>
                             <form action="handle_verification.php" method="POST" class="d-inline">
                                 <input type="hidden" name="invoice_id" value="<?php echo $inv['id']; ?>">

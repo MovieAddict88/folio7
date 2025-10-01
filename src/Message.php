@@ -7,10 +7,10 @@ class Message {
         $this->pdo = $pdo;
     }
 
-    public function create($conversationId, $senderId, $message) {
-        $sql = "INSERT INTO messages (conversation_id, sender_id, message) VALUES (?, ?, ?)";
+    public function create($conversationId, $senderId, $message, $filePath = null) {
+        $sql = "INSERT INTO messages (conversation_id, sender_id, message, file_path) VALUES (?, ?, ?, ?)";
         $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute([$conversationId, $senderId, $message]);
+        return $stmt->execute([$conversationId, $senderId, $message, $filePath]);
     }
 
     public function getByConversationId($conversationId) {
