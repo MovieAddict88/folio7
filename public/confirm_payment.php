@@ -3,7 +3,8 @@ session_start();
 require_once '../config/db.php';
 require_once '../src/Invoice.php';
 require_once '../src/Payment.php';
-require_once '../src/Notification.php';
+require_once '../src/Conversation.php';
+require_once '../src/Message.php';
 
 // User must be logged in to have a session context
 if (!isset($_SESSION['user_id'])) {
@@ -51,7 +52,8 @@ if (!$invoiceData || $invoiceData['user_id'] != $_SESSION['user_id'] || $invoice
 // --- Finalize Payment Based on Status ---
 
 $payment = new Payment($pdo);
-$notification = new Notification($pdo);
+$conversation = new Conversation($pdo);
+$message = new Message($pdo);
 $adminUserId = 1; // Assuming admin user ID is 1
 
 try {
@@ -69,9 +71,16 @@ try {
         // 2. Update the invoice payment details
         $invoice->updatePaymentDetails($invoiceId, $amount);
 
-        // 3. Create a notification for the admin
-        $message = "Payment of $" . number_format($amount, 2) . " for Invoice #$invoiceId was confirmed via $paymentMethod (Transaction ID: $transactionId).";
-        $notification->create($adminUserId, $message);
+        // 3. Create a conversation message for the admin
+        $messageText = "Payment of $" . number_format($amount, 2) . " for Invoice #$invoiceId was confirmed via $paymentMethod (Transaction ID: $transactionId).";
+        $subject = "Invoice #{$invoiceId} Payment";
+        $existingConversation = $conversation->findBySubjectAndUserId($subject, $_SESSION['user_id']);
+        if ($existingConversation) {
+            $conversationId = $existingConversation['id'];
+        } else {
+            $conversationId = $conversation->create($_SESSION['user_id'], $adminUserId, $subject);
+        }
+        $message->create($conversationId, $_SESSION['user_id'], $messageText);
 
         $pdo->commit();
 
@@ -93,9 +102,16 @@ try {
         // 3. Update the invoice status to 'pending_verification'
         $invoice->updateStatus($invoiceId, 'pending_verification');
 
-        // 4. Create a notification for the admin to verify the payment
-        $message = "A payment of $" . number_format($amount, 2) . " for Invoice #$invoiceId was submitted via $paymentMethod and requires verification. Reference: $referenceNumber.";
-        $notification->create($adminUserId, $message);
+        // 4. Create a conversation message for the admin to verify the payment
+        $messageText = "A payment of $" . number_format($amount, 2) . " for Invoice #$invoiceId was submitted via $paymentMethod and requires verification. Reference: $referenceNumber.";
+        $subject = "Invoice #{$invoiceId} Payment Verification";
+        $existingConversation = $conversation->findBySubjectAndUserId($subject, $_SESSION['user_id']);
+        if ($existingConversation) {
+            $conversationId = $existingConversation['id'];
+        } else {
+            $conversationId = $conversation->create($_SESSION['user_id'], $adminUserId, $subject);
+        }
+        $message->create($conversationId, $_SESSION['user_id'], $messageText);
 
         $pdo->commit();
 

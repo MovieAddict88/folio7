@@ -22,6 +22,9 @@ if (!isset($_SESSION['user_id'])) {
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
+                        <a class="nav-link" href="conversations.php">Messages</a>
+                    </li>
+                    <li class="nav-item">
                         <span class="navbar-text">
                             Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>!
                         </span>
