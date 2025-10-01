@@ -40,14 +40,28 @@ try {
     $pdo->beginTransaction();
 
     if ($action === 'approve') {
-        // Update the invoice status to 'paid'.
-        $invoice->updateStatus($invoiceId, 'paid');
+        // When approving, we need to check if the invoice is fully paid or partially paid.
+        // We'll get the latest payment to know the amount.
+        $latestPayment = $payment->getLatestPaymentForInvoice($invoiceId);
 
-        // Create notification for the user
-        $message = "Your payment for Invoice #{$invoiceId} has been approved and is now marked as paid. Thank you!";
+        if (!$latestPayment) {
+            throw new Exception("No payment record found to approve for invoice #{$invoiceId}.");
+        }
+
+        // The amount of the payment being approved
+        $paymentAmount = $latestPayment['amount'];
+
+        // The invoice class will now handle the logic of updating the status
+        $invoice->updateStatusBasedOnBalance($invoiceId);
+
+        // Update notification message to be more accurate
+        $newInvoiceState = $invoice->getById($invoiceId);
+        $status = $newInvoiceState['status'];
+
+        $message = "Your payment of $" . number_format($paymentAmount, 2) . " for Invoice #{$invoiceId} has been approved. The invoice status is now '{$status}'.";
         $notification->create($userId, $message);
 
-        $successMessage = "Payment for Invoice #{$invoiceId} has been approved and marked as paid.";
+        $successMessage = "Payment for Invoice #{$invoiceId} has been approved. Invoice status is now '{$status}'.";
 
     } elseif ($action === 'reject') {
         // Find the latest payment to know how much to revert
