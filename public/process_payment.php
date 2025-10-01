@@ -79,12 +79,25 @@ if ($paymentMethod === 'gcash' || $paymentMethod === 'paymaya') {
             <p class="mb-0"><strong>Amount to Pay:</strong></p>
             <p class="mb-0 fs-5"><strong>₱{$amount}</strong></p>
         </div>
-        <div class="alert alert-info mt-4">
-            This is a simulated payment screen. After "paying," click the button below to confirm your transaction.
-        </div>
-        <div class="d-grid mt-4">
-            <a href="{$successCallbackUrl}" class="btn btn-success btn-lg">I Have Paid</a>
-        </div>
+        <hr>
+        <form action="{$manualCallbackUrl}" method="POST">
+            <input type="hidden" name="invoice_id" value="{$invoiceId}">
+            <input type="hidden" name="amount" value="{$amount}">
+            <input type="hidden" name="payment_method" value="{$paymentMethod}">
+            <input type="hidden" name="status" value="pending_verification">
+
+            <div class="mb-3">
+                <label for="reference_number" class="form-label"><strong>Reference Number</strong></label>
+                <input type="text" class="form-control" id="reference_number" name="reference_number" placeholder="Enter the transaction code" required>
+                <div class="form-text">Enter the reference number from your receipt or online transfer.</div>
+            </div>
+            <div class="alert alert-warning">
+                This is a simulation. Your payment will be marked as "Pending Verification" and will need to be manually approved by an admin.
+            </div>
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg">Submit for Verification</button>
+            </div>
+        </form>
     </div>
     <div class="card-footer text-center bg-transparent">
         <a href="{$cancelUrl}">Cancel Payment</a>
