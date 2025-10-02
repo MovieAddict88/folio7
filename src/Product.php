@@ -60,5 +60,14 @@ class Product {
         $stmt = $this->pdo->prepare('DELETE FROM products WHERE id = ?');
         return $stmt->execute([$id]);
     }
+
+    /**
+     * Gets the total count of products.
+     * @return int
+     */
+    public function getTotalCount() {
+        $stmt = $this->pdo->query("SELECT COUNT(*) FROM products");
+        return (int) $stmt->fetchColumn();
+    }
 }
 ?>

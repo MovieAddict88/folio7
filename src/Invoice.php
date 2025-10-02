@@ -11,9 +11,10 @@ class Invoice {
      * @param int $userId
      * @param array $items - Array of ['product_id' =>, 'quantity' =>, 'price' =>]
      * @param string $dueDate
+     * @param string $currency
      * @return int|false The new invoice ID on success, false on failure.
      */
-    public function create($userId, $items, $dueDate) {
+    public function create($userId, $items, $dueDate, $currency) {
         $totalAmount = 0;
         foreach ($items as $item) {
             $totalAmount += $item['quantity'] * $item['price'];
@@ -24,9 +25,9 @@ class Invoice {
 
             // Insert into invoices table
             $stmt = $this->pdo->prepare(
-                'INSERT INTO invoices (user_id, total_amount, balance, due_date, status) VALUES (?, ?, ?, ?, ?)'
+                'INSERT INTO invoices (user_id, total_amount, balance, due_date, currency, status) VALUES (?, ?, ?, ?, ?, ?)'
             );
-            $stmt->execute([$userId, $totalAmount, $totalAmount, $dueDate, 'pending']);
+            $stmt->execute([$userId, $totalAmount, $totalAmount, $dueDate, $currency, 'pending']);
             $invoiceId = $this->pdo->lastInsertId();
 
             // Insert into invoice_items table
@@ -47,16 +48,31 @@ class Invoice {
     }
 
     /**
-     * Fetches all invoices with user information.
+     * Fetches all invoices with user information for a specific page.
+     * @param int $limit
+     * @param int $offset
      * @return array
      */
-    public function getAllWithUsers() {
-        $sql = "SELECT i.id, i.total_amount, i.amount_paid, i.balance, i.status, i.created_at, i.due_date, u.username
+    public function getAllWithUsers($limit, $offset) {
+        $sql = "SELECT i.id, i.total_amount, i.amount_paid, i.balance, i.status, i.created_at, i.due_date, i.currency, u.username
                 FROM invoices i
                 JOIN users u ON i.user_id = u.id
-                ORDER BY i.created_at DESC";
-        $stmt = $this->pdo->query($sql);
+                ORDER BY i.created_at DESC
+                LIMIT :limit OFFSET :offset";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Counts all invoices.
+     * @return int
+     */
+    public function countAll() {
+        $stmt = $this->pdo->query("SELECT COUNT(*) FROM invoices");
+        return $stmt->fetchColumn();
     }
 
     /**
@@ -94,16 +110,32 @@ class Invoice {
     }
 
      /**
-     * Fetches all invoices for a specific user.
+     * Fetches all invoices for a specific user for a specific page.
      * @param int $userId
+     * @param int $limit
+     * @param int $offset
      * @return array
      */
-    public function getByUserId($userId) {
+    public function getByUserId($userId, $limit, $offset) {
         $stmt = $this->pdo->prepare(
-            'SELECT * FROM invoices WHERE user_id = ? ORDER BY created_at DESC'
+            'SELECT * FROM invoices WHERE user_id = :userId ORDER BY created_at DESC LIMIT :limit OFFSET :offset'
         );
-        $stmt->execute([$userId]);
+        $stmt->bindValue(':userId', $userId, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Counts all invoices for a specific user.
+     * @param int $userId
+     * @return int
+     */
+    public function countByUserId($userId) {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM invoices WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        return $stmt->fetchColumn();
     }
 
     /**
@@ -201,6 +233,48 @@ class Invoice {
             "UPDATE invoices SET amount_paid = ?, balance = ? WHERE id = ?"
         );
         return $stmt->execute([$newAmountPaid, $newBalance, $id]);
+    }
+
+    /**
+     * Updates the invoice status based on its current balance.
+     * Sets status to 'paid' if balance is 0 or less, otherwise 'pending'.
+     * @param int $id The invoice ID.
+     * @return bool
+     */
+    public function updateStatusBasedOnBalance($id) {
+        $invoice = $this->getById($id);
+        if (!$invoice) {
+            return false;
+        }
+
+        // Determine the new status based on the balance.
+        // The approval of a payment is a final action on that payment, so if balance is > 0, it's 'pending', otherwise 'paid'.
+        $newStatus = $invoice['balance'] <= 0 ? 'paid' : 'pending';
+
+        return $this->updateStatus($id, $newStatus);
+    }
+
+    /**
+     * Gets the count of users with invoices due in the next 3 days.
+     * @return int
+     */
+    public function countUsersWithUpcomingDueInvoices() {
+        $stmt = $this->pdo->query("
+            SELECT COUNT(DISTINCT user_id)
+            FROM invoices
+            WHERE status NOT IN ('paid', 'cancelled')
+              AND due_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)
+        ");
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Gets the count of unique users who have at least one invoice.
+     * @return int
+     */
+    public function countUsersWithInvoices() {
+        $stmt = $this->pdo->query("SELECT COUNT(DISTINCT user_id) FROM invoices");
+        return (int) $stmt->fetchColumn();
     }
 }
 ?>

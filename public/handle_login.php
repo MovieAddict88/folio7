@@ -31,7 +31,12 @@ try {
         $_SESSION['username'] = $userData['username'];
         $_SESSION['role'] = $userData['role'];
 
-        header('Location: dashboard.php');
+        // Redirect based on role
+        if ($userData['role'] === 'admin') {
+            header('Location: admin/index.php');
+        } else {
+            header('Location: dashboard.php');
+        }
         exit;
     } else {
         header('Location: login.php?error=Invalid username or password.');

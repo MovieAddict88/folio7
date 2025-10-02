@@ -43,8 +43,8 @@ if ($invoiceData['status'] === 'rejected') {
 // In a real application, the base URL should be stored in a configuration file.
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
 $host = $_SERVER['HTTP_HOST'];
-// Get the base path of the application by finding the directory of the current script.
-$basePath = dirname($_SERVER['SCRIPT_NAME']);
+// Get the base path of the application, ensuring it doesn't have a trailing slash if it's not the root.
+$basePath = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
 // Construct a clean callback URL pointing to confirm_payment.php
 $callbackUrl = $protocol . $host . $basePath . '/confirm_payment.php';
 

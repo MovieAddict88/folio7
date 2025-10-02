@@ -3,6 +3,7 @@ session_start();
 require_once '../config/db.php';
 require_once '../src/Invoice.php';
 require_once '../src/Payment.php';
+require_once '../src/currency_helper.php';
 
 // User must be logged in
 if (!isset($_SESSION['user_id'])) {
@@ -37,6 +38,7 @@ if (empty($payments)) {
 
 $invoiceData = $details['invoice'];
 $latestPayment = $payments[0]; // The latest payment for the main receipt details
+$currencySymbol = getCurrencySymbol($invoiceData['currency']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -76,7 +78,7 @@ $latestPayment = $payments[0]; // The latest payment for the main receipt detail
                 <li><strong>Payment Date:</strong> <?php echo htmlspecialchars(date('F j, Y, g:i a', strtotime($latestPayment['payment_date']))); ?></li>
                 <li><strong>Payment Method:</strong> <?php echo htmlspecialchars($latestPayment['payment_method']); ?></li>
                 <li><strong>Transaction ID:</strong> <?php echo htmlspecialchars($latestPayment['transaction_id']); ?></li>
-                <li class="mt-2"><strong>Amount Paid (This Transaction):</strong> <span class="h5">$<?php echo htmlspecialchars(number_format($latestPayment['amount'], 2)); ?></span></li>
+                <li class="mt-2"><strong>Amount Paid (This Transaction):</strong> <span class="h5"><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($latestPayment['amount'], 2)); ?></span></li>
             </ul>
             <hr>
 
@@ -85,15 +87,15 @@ $latestPayment = $payments[0]; // The latest payment for the main receipt detail
                 <tbody>
                     <tr>
                         <th class="text-end" style="width: 75%;">Total Invoice Amount:</th>
-                        <td class="text-end h5">$<?php echo htmlspecialchars(number_format($invoiceData['total_amount'], 2)); ?></td>
+                        <td class="text-end h5"><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($invoiceData['total_amount'], 2)); ?></td>
                     </tr>
                     <tr>
                         <th class="text-end">Total Amount Paid:</th>
-                        <td class="text-end h5 text-success">$<?php echo htmlspecialchars(number_format($invoiceData['amount_paid'], 2)); ?></td>
+                        <td class="text-end h5 text-success"><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($invoiceData['amount_paid'], 2)); ?></td>
                     </tr>
                     <tr>
                         <th class="text-end text-danger">Remaining Balance:</th>
-                        <td class="text-end h5 text-danger">$<?php echo htmlspecialchars(number_format($invoiceData['balance'], 2)); ?></td>
+                        <td class="text-end h5 text-danger"><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($invoiceData['balance'], 2)); ?></td>
                     </tr>
                 </tbody>
             </table>
@@ -116,7 +118,7 @@ $latestPayment = $payments[0]; // The latest payment for the main receipt detail
                         <td><?php echo htmlspecialchars(date('Y-m-d H:i', strtotime($p['payment_date']))); ?></td>
                         <td><?php echo htmlspecialchars($p['payment_method']); ?></td>
                         <td><?php echo htmlspecialchars($p['transaction_id']); ?></td>
-                        <td class="text-end">$<?php echo htmlspecialchars(number_format($p['amount'], 2)); ?></td>
+                        <td class="text-end"><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($p['amount'], 2)); ?></td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>

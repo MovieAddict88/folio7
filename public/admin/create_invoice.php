@@ -14,7 +14,7 @@ $pdo = getDBConnection();
 $user = new User($pdo);
 $product = new Product($pdo);
 
-$users = $user->getAll();
+$users = $user->getAllStandardUsers();
 $products = $product->getAll();
 ?>
 <!DOCTYPE html>
@@ -32,7 +32,7 @@ $products = $product->getAll();
         <form action="handle_create_invoice.php" method="POST">
             <div class="card p-3">
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label for="user_id" class="form-label">Select User</label>
                         <select class="form-select" id="user_id" name="user_id" required>
                             <option value="">Choose a user...</option>
@@ -41,9 +41,17 @@ $products = $product->getAll();
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label for="due_date" class="form-label">Due Date</label>
                         <input type="date" class="form-control" id="due_date" name="due_date" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="currency" class="form-label">Currency</label>
+                        <select class="form-select" id="currency" name="currency" required>
+                            <option value="USD" selected>USD ($)</option>
+                            <option value="PHP">PHP (₱)</option>
+                            <option value="AED">AED (د.إ)</option>
+                        </select>
                     </div>
                 </div>
 

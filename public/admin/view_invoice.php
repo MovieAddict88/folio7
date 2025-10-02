@@ -3,6 +3,7 @@ session_start();
 require_once '../../config/db.php';
 require_once '../../src/Invoice.php';
 require_once '../../src/Payment.php';
+require_once '../../src/currency_helper.php';
 
 // Auth check
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
@@ -27,6 +28,7 @@ if (!$details) {
 $invoiceData = $details['invoice'];
 $items = $details['items'];
 $paymentData = null;
+$currencySymbol = getCurrencySymbol($invoiceData['currency']);
 
 // Fetch payment details for paid or pending verification invoices
 if ($invoiceData['status'] === 'paid' || $invoiceData['status'] === 'pending_verification') {
@@ -106,23 +108,23 @@ switch ($invoiceData['status']) {
                     <tr>
                         <td><?php echo htmlspecialchars($item['product_name']); ?></td>
                         <td><?php echo htmlspecialchars($item['quantity']); ?></td>
-                        <td>$<?php echo htmlspecialchars(number_format($item['price'], 2)); ?></td>
-                        <td>$<?php echo htmlspecialchars(number_format($item['quantity'] * $item['price'], 2)); ?></td>
+                        <td><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($item['price'], 2)); ?></td>
+                        <td><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($item['quantity'] * $item['price'], 2)); ?></td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
                 <tfoot>
                     <tr>
                         <th colspan="3" class="text-end">Grand Total:</th>
-                        <th>$<?php echo htmlspecialchars(number_format($invoiceData['total_amount'], 2)); ?></th>
+                        <th><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($invoiceData['total_amount'], 2)); ?></th>
                     </tr>
                      <tr>
                         <th colspan="3" class="text-end">Amount Paid:</th>
-                        <th class="text-success">$<?php echo htmlspecialchars(number_format($invoiceData['amount_paid'], 2)); ?></th>
+                        <th class="text-success"><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($invoiceData['amount_paid'], 2)); ?></th>
                     </tr>
                     <tr>
                         <th colspan="3" class="text-end text-danger">Balance Due:</th>
-                        <th class="text-danger">$<?php echo htmlspecialchars(number_format($invoiceData['balance'], 2)); ?></th>
+                        <th class="text-danger"><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($invoiceData['balance'], 2)); ?></th>
                     </tr>
                 </tfoot>
             </table>
@@ -144,7 +146,7 @@ switch ($invoiceData['status']) {
                     <?php foreach ($paymentData as $payment): ?>
                     <tr>
                         <td><?php echo htmlspecialchars(date('Y-m-d H:i', strtotime($payment['payment_date']))); ?></td>
-                        <td>$<?php echo htmlspecialchars(number_format($payment['amount'], 2)); ?></td>
+                        <td><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($payment['amount'], 2)); ?></td>
                         <td><?php echo htmlspecialchars($payment['payment_method']); ?></td>
                         <td><?php echo htmlspecialchars($payment['transaction_id']); ?></td>
                         <td><?php echo htmlspecialchars($payment['reference_number'] ?: 'N/A'); ?></td>

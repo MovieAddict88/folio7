@@ -16,10 +16,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $userId = filter_var($_POST['user_id'], FILTER_VALIDATE_INT);
 $dueDate = $_POST['due_date']; // Basic validation, can be improved
+$currency = $_POST['currency'];
 $items = isset($_POST['items']) ? $_POST['items'] : [];
 
 // Basic validation
-if ($userId === false || empty($dueDate) || empty($items)) {
+if ($userId === false || empty($dueDate) || empty($items) || empty($currency)) {
     header('Location: create_invoice.php?error=Invalid input. Please fill out all fields.');
     exit;
 }
@@ -48,7 +49,7 @@ try {
     $pdo = getDBConnection();
     $invoice = new Invoice($pdo);
 
-    if ($invoice->create($userId, $sanitizedItems, $dueDate)) {
+    if ($invoice->create($userId, $sanitizedItems, $dueDate, $currency)) {
         header('Location: invoices.php?success=Invoice created successfully.');
     } else {
         header('Location: create_invoice.php?error=Failed to create invoice.');
