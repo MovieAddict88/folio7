@@ -253,5 +253,28 @@ class Invoice {
 
         return $this->updateStatus($id, $newStatus);
     }
+
+    /**
+     * Gets the count of users with invoices due in the next 3 days.
+     * @return int
+     */
+    public function countUsersWithUpcomingDueInvoices() {
+        $stmt = $this->pdo->query("
+            SELECT COUNT(DISTINCT user_id)
+            FROM invoices
+            WHERE status NOT IN ('paid', 'cancelled')
+              AND due_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)
+        ");
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Gets the count of unique users who have at least one invoice.
+     * @return int
+     */
+    public function countUsersWithInvoices() {
+        $stmt = $this->pdo->query("SELECT COUNT(DISTINCT user_id) FROM invoices");
+        return (int) $stmt->fetchColumn();
+    }
 }
 ?>

@@ -14,7 +14,7 @@ $pdo = getDBConnection();
 $user = new User($pdo);
 $product = new Product($pdo);
 
-$users = $user->getAll();
+$users = $user->getAllStandardUsers();
 $products = $product->getAll();
 ?>
 <!DOCTYPE html>

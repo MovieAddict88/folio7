@@ -79,5 +79,23 @@ class User {
         $stmt = $this->pdo->query("SELECT id, username, email FROM users WHERE role = 'admin'");
         return $stmt->fetchAll();
     }
+
+    /**
+     * Fetches all non-admin users.
+     * @return array
+     */
+    public function getAllStandardUsers() {
+        $stmt = $this->pdo->query("SELECT id, username, email, role, created_at FROM users WHERE role = 'user' ORDER BY created_at DESC");
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Gets the total count of standard users.
+     * @return int
+     */
+    public function getTotalStandardUsersCount() {
+        $stmt = $this->pdo->query("SELECT COUNT(*) FROM users WHERE role = 'user'");
+        return (int) $stmt->fetchColumn();
+    }
 }
 ?>
