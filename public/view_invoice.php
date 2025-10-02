@@ -2,6 +2,7 @@
 session_start();
 require_once '../config/db.php';
 require_once '../src/Invoice.php';
+require_once '../src/currency_helper.php';
 
 // User must be logged in
 if (!isset($_SESSION['user_id'])) {
@@ -26,6 +27,7 @@ if (!$details || ($details['invoice']['user_id'] != $_SESSION['user_id'] && $_SE
 
 $invoiceData = $details['invoice'];
 $items = $details['items'];
+$currencySymbol = getCurrencySymbol($invoiceData['currency']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -92,23 +94,23 @@ $items = $details['items'];
                     <tr>
                         <td><?php echo htmlspecialchars($item['product_name']); ?></td>
                         <td><?php echo htmlspecialchars($item['quantity']); ?></td>
-                        <td>$<?php echo htmlspecialchars(number_format($item['price'], 2)); ?></td>
-                        <td>$<?php echo htmlspecialchars(number_format($item['quantity'] * $item['price'], 2)); ?></td>
+                        <td><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($item['price'], 2)); ?></td>
+                        <td><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($item['quantity'] * $item['price'], 2)); ?></td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
                 <tfoot>
                     <tr>
                         <th colspan="3" class="text-end">Grand Total:</th>
-                        <th>$<?php echo htmlspecialchars(number_format($invoiceData['total_amount'], 2)); ?></th>
+                        <th><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($invoiceData['total_amount'], 2)); ?></th>
                     </tr>
                     <tr>
                         <th colspan="3" class="text-end">Amount Paid:</th>
-                        <th>$<?php echo htmlspecialchars(number_format($invoiceData['amount_paid'], 2)); ?></th>
+                        <th><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($invoiceData['amount_paid'], 2)); ?></th>
                     </tr>
                     <tr>
                         <th colspan="3" class="text-end text-danger">Balance Due:</th>
-                        <th class="text-danger">$<?php echo htmlspecialchars(number_format($invoiceData['balance'], 2)); ?></th>
+                        <th class="text-danger"><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($invoiceData['balance'], 2)); ?></th>
                     </tr>
                 </tfoot>
             </table>
@@ -117,6 +119,7 @@ $items = $details['items'];
                  <?php if ($invoiceData['balance'] > 0 && in_array($invoiceData['status'], ['pending', 'rejected', 'cancelled'])): ?>
                     <a href="payment.php?id=<?php echo htmlspecialchars($invoiceData['id']); ?>" class="btn btn-success">Pay Now</a>
                  <?php endif; ?>
+                 <a href="view_transaction_conversation.php?invoice_id=<?php echo htmlspecialchars($invoiceData['id']); ?>" class="btn btn-info">Discuss this transaction</a>
             </div>
         </div>
     </div>

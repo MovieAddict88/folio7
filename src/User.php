@@ -70,5 +70,14 @@ class User {
         $stmt->execute([$id]);
         return $stmt->fetch();
     }
+
+    /**
+     * Fetches all admin users.
+     * @return array
+     */
+    public function getAdmins() {
+        $stmt = $this->pdo->query("SELECT id, username, email FROM users WHERE role = 'admin'");
+        return $stmt->fetchAll();
+    }
 }
 ?>
