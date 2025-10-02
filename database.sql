@@ -45,6 +45,7 @@ CREATE TABLE `invoices` (
   `total_amount` decimal(10,2) NOT NULL,
   `amount_paid` decimal(10,2) NOT NULL DEFAULT '0.00',
   `balance` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `currency` varchar(10) NOT NULL DEFAULT 'USD',
   `status` enum('pending','paid','cancelled','pending_verification','rejected') NOT NULL DEFAULT 'pending',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `due_date` date DEFAULT NULL,

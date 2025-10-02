@@ -2,6 +2,7 @@
 session_start();
 require_once '../../config/db.php';
 require_once '../../src/Invoice.php';
+require_once '../../src/currency_helper.php';
 
 // Auth check
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
@@ -78,12 +79,13 @@ $invoices = $invoice->getAllWithUsers($limit, $offset);
                             break;
                     }
                 ?>
+                <?php $currencySymbol = getCurrencySymbol($inv['currency']); ?>
                 <tr class="<?php echo $inv['status'] === 'pending_verification' ? 'table-primary' : ''; ?>">
                     <td>#<?php echo htmlspecialchars($inv['id']); ?></td>
                     <td><?php echo htmlspecialchars($inv['username']); ?></td>
-                    <td>$<?php echo htmlspecialchars(number_format($inv['total_amount'], 2)); ?></td>
-                    <td>$<?php echo htmlspecialchars(number_format($inv['amount_paid'], 2)); ?></td>
-                    <td>$<?php echo htmlspecialchars(number_format($inv['balance'], 2)); ?></td>
+                    <td><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($inv['total_amount'], 2)); ?></td>
+                    <td><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($inv['amount_paid'], 2)); ?></td>
+                    <td><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($inv['balance'], 2)); ?></td>
                     <td><span class="badge bg-<?php echo $status_class; ?>"><?php echo ucfirst(str_replace('_', ' ', htmlspecialchars($inv['status']))); ?></span></td>
                     <td><?php echo htmlspecialchars(date('Y-m-d', strtotime($inv['created_at']))); ?></td>
                     <td><?php echo htmlspecialchars($inv['due_date']); ?></td>

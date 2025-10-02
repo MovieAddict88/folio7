@@ -11,9 +11,10 @@ class Invoice {
      * @param int $userId
      * @param array $items - Array of ['product_id' =>, 'quantity' =>, 'price' =>]
      * @param string $dueDate
+     * @param string $currency
      * @return int|false The new invoice ID on success, false on failure.
      */
-    public function create($userId, $items, $dueDate) {
+    public function create($userId, $items, $dueDate, $currency) {
         $totalAmount = 0;
         foreach ($items as $item) {
             $totalAmount += $item['quantity'] * $item['price'];
@@ -24,9 +25,9 @@ class Invoice {
 
             // Insert into invoices table
             $stmt = $this->pdo->prepare(
-                'INSERT INTO invoices (user_id, total_amount, balance, due_date, status) VALUES (?, ?, ?, ?, ?)'
+                'INSERT INTO invoices (user_id, total_amount, balance, due_date, currency, status) VALUES (?, ?, ?, ?, ?, ?)'
             );
-            $stmt->execute([$userId, $totalAmount, $totalAmount, $dueDate, 'pending']);
+            $stmt->execute([$userId, $totalAmount, $totalAmount, $dueDate, $currency, 'pending']);
             $invoiceId = $this->pdo->lastInsertId();
 
             // Insert into invoice_items table
@@ -53,7 +54,7 @@ class Invoice {
      * @return array
      */
     public function getAllWithUsers($limit, $offset) {
-        $sql = "SELECT i.id, i.total_amount, i.amount_paid, i.balance, i.status, i.created_at, i.due_date, u.username
+        $sql = "SELECT i.id, i.total_amount, i.amount_paid, i.balance, i.status, i.created_at, i.due_date, i.currency, u.username
                 FROM invoices i
                 JOIN users u ON i.user_id = u.id
                 ORDER BY i.created_at DESC

@@ -48,6 +48,7 @@ if (!isset($_SESSION['user_id'])) {
         <?php
         require_once '../config/db.php';
         require_once '../src/Invoice.php';
+        require_once '../src/currency_helper.php';
 
         $pdo = getDBConnection();
         $invoice = new Invoice($pdo);
@@ -82,10 +83,11 @@ if (!isset($_SESSION['user_id'])) {
                 </thead>
                 <tbody>
                     <?php foreach ($userInvoices as $inv): ?>
+                    <?php $currencySymbol = getCurrencySymbol($inv['currency']); ?>
                     <tr>
                         <td>#<?php echo htmlspecialchars($inv['id']); ?></td>
-                        <td>$<?php echo htmlspecialchars(number_format($inv['total_amount'], 2)); ?></td>
-                        <td>$<?php echo htmlspecialchars(number_format($inv['balance'], 2)); ?></td>
+                        <td><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($inv['total_amount'], 2)); ?></td>
+                        <td><?php echo $currencySymbol; ?><?php echo htmlspecialchars(number_format($inv['balance'], 2)); ?></td>
                         <td><span class="badge bg-<?php
                             $status = $inv['status'];
                             if ($status === 'paid' || $status === 'approved') {
